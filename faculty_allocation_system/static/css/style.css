@@ -1,0 +1,281 @@
+/* =====================================================
+   style.css - Custom Styles for Faculty Allocation System
+   ===================================================== */
+
+/* ---- Google Font ---- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --sidebar-width: 240px;
+    --navbar-height: 56px;
+    --primary: #1a237e;
+    --accent:  #3949ab;
+    --bg: #f0f2f5;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    margin: 0;
+    overflow-x: hidden;
+}
+
+/* =====================================================
+   SIDEBAR
+   ===================================================== */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: var(--sidebar-width);
+    height: 100vh;
+    background: linear-gradient(180deg, #0d1b6e 0%, #1a237e 60%, #283593 100%);
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    transition: transform 0.3s ease;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+}
+
+.sidebar-brand {
+    padding: 20px 20px 16px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: white;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sidebar-nav {
+    padding: 12px 0;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.sidebar-nav .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: rgba(255,255,255,0.75);
+    padding: 10px 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-nav .nav-link:hover {
+    color: white;
+    background: rgba(255,255,255,0.1);
+    border-left-color: rgba(255,255,255,0.5);
+}
+
+.sidebar-nav .nav-link.active {
+    color: white;
+    background: rgba(255,255,255,0.15);
+    border-left-color: #7986cb;
+}
+
+.sidebar-nav .nav-link i {
+    width: 18px;
+    text-align: center;
+    font-size: 0.95rem;
+}
+
+.sidebar-footer {
+    padding: 12px 0 16px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+/* =====================================================
+   MAIN CONTENT
+   ===================================================== */
+.main-content {
+    margin-left: var(--sidebar-width);
+    min-height: 100vh;
+    transition: margin-left 0.3s ease;
+}
+
+.top-navbar {
+    height: var(--navbar-height);
+    background: white;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    position: sticky;
+    top: 0;
+    z-index: 900;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.page-content {
+    padding: 0 24px 40px;
+}
+
+/* Sidebar hidden (mobile toggle) */
+.sidebar.hidden { transform: translateX(-100%); }
+.sidebar.hidden ~ .main-content { margin-left: 0; }
+
+/* =====================================================
+   CARDS & STAT CARDS
+   ===================================================== */
+.stat-card {
+    border-radius: 12px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1) !important;
+}
+
+.stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    font-size: 1.15rem;
+}
+
+.bg-primary-soft { background: rgba(26,35,126,0.1); }
+.bg-success-soft { background: rgba(46,125,50,0.1);  }
+.bg-warning-soft { background: rgba(245,127,23,0.1); }
+.bg-info-soft    { background: rgba(2,119,189,0.1);  }
+.bg-danger-soft  { background: rgba(183,28,28,0.1);  }
+
+.card {
+    border-radius: 12px;
+}
+
+.card-header {
+    padding: 16px 20px 0;
+    font-size: 0.95rem;
+}
+
+/* =====================================================
+   TIMETABLE GRID
+   ===================================================== */
+.timetable-grid {
+    font-size: 0.82rem;
+    border-collapse: collapse;
+}
+
+.timetable-grid th {
+    text-align: center;
+    white-space: nowrap;
+    font-size: 0.8rem;
+    padding: 8px 6px;
+}
+
+.timetable-grid td {
+    min-width: 110px;
+    padding: 8px 4px;
+    vertical-align: middle;
+}
+
+.tt-filled {
+    background: linear-gradient(135deg, #e8eaf6 0%, #c5cae9 100%) !important;
+    border-radius: 4px;
+}
+
+.tt-empty {
+    background: #fafafa;
+    color: #bbb;
+}
+
+/* =====================================================
+   FORMS & INPUTS
+   ===================================================== */
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 0.2rem rgba(57,73,171,0.2);
+}
+
+/* =====================================================
+   BUTTONS
+   ===================================================== */
+.btn-primary {
+    background: linear-gradient(135deg, #1a237e, #3949ab);
+    border: none;
+}
+.btn-primary:hover {
+    background: linear-gradient(135deg, #283593, #5c6bc0);
+}
+
+/* =====================================================
+   ALERTS
+   ===================================================== */
+.alert {
+    border-radius: 10px;
+    font-size: 0.9rem;
+}
+
+/* =====================================================
+   TABLE IMPROVEMENTS
+   ===================================================== */
+.table > :not(caption) > * > * {
+    padding: 10px 12px;
+}
+
+.table-dark th {
+    background: #1a237e !important;
+    border-color: #283593 !important;
+    font-weight: 600;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+/* =====================================================
+   RESPONSIVE MOBILE
+   ===================================================== */
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+    }
+    .main-content {
+        margin-left: 0;
+    }
+    .sidebar.open {
+        transform: translateX(0);
+    }
+    .page-content {
+        padding: 0 12px 30px;
+    }
+}
+
+/* =====================================================
+   LOADING OVERLAY (shown while algorithm runs)
+   ===================================================== */
+#loadingOverlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 16px;
+    color: white;
+}
+
+#loadingOverlay.active {
+    display: flex;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: #c5cae9; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #9fa8da; }

@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h3 class="fw-bold mb-0"><i class="fas fa-tachometer-alt me-2 text-primary"></i>Admin Dashboard</h3>
+        <small class="text-muted">Faculty Allocation &amp; Timetable Overview</small>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-2 col-sm-4 col-6">
+        <div class="card stat-card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="stat-icon bg-primary-soft mb-2"><i class="fas fa-chalkboard-teacher text-primary"></i></div>
+                <h4 class="fw-bold mb-0">{{ faculty_count }}</h4>
+                <small class="text-muted">Faculty</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-4 col-6">
+        <div class="card stat-card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="stat-icon bg-success-soft mb-2"><i class="fas fa-book text-success"></i></div>
+                <h4 class="fw-bold mb-0">{{ subject_count }}</h4>
+                <small class="text-muted">Subjects</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-4 col-6">
+        <div class="card stat-card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="stat-icon bg-info-soft mb-2"><i class="fas fa-users text-info"></i></div>
+                <h4 class="fw-bold mb-0">{{ class_count }}</h4>
+                <small class="text-muted">Classes</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-4 col-6">
+        <div class="card stat-card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="stat-icon bg-warning-soft mb-2"><i class="fas fa-magic text-warning"></i></div>
+                <h4 class="fw-bold mb-0">{{ alloc_count }}</h4>
+                <small class="text-muted">Allocations</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-4 col-6">
+        <div class="card stat-card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="stat-icon bg-danger-soft mb-2"><i class="fas fa-calendar-alt text-danger"></i></div>
+                <h4 class="fw-bold mb-0">{{ tt_count }}</h4>
+                <small class="text-muted">Timetable Slots</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Action Buttons -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center py-4">
+                <i class="fas fa-magic fa-2x text-primary mb-3"></i>
+                <h6 class="fw-bold">Run Allocation</h6>
+                <p class="text-muted small">AI-based weighted scoring allocation</p>
+                <form method="POST" action="{{ url_for('admin.run_allocation') }}">
+                    <button class="btn btn-primary btn-sm px-4">
+                        <i class="fas fa-play me-1"></i> Run Now
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center py-4">
+                <i class="fas fa-calendar-alt fa-2x text-success mb-3"></i>
+                <h6 class="fw-bold">Generate Timetable</h6>
+                <p class="text-muted small">OR-Tools constraint-based scheduling</p>
+                <form method="POST" action="{{ url_for('admin.generate_timetable') }}">
+                    <button class="btn btn-success btn-sm px-4">
+                        <i class="fas fa-play me-1"></i> Generate
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center py-4">
+                <i class="fas fa-download fa-2x text-info mb-3"></i>
+                <h6 class="fw-bold">Export Timetable</h6>
+                <p class="text-muted small">Download PDF or Excel file</p>
+                <a href="{{ url_for('admin.export_timetable_pdf') }}"   class="btn btn-danger btn-sm me-1">
+                    <i class="fas fa-file-pdf"></i> PDF
+                </a>
+                <a href="{{ url_for('admin.export_timetable_excel') }}" class="btn btn-success btn-sm">
+                    <i class="fas fa-file-excel"></i> Excel
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Workload & Recent Allocations -->
+<div class="row g-3">
+    <div class="col-md-5">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-bold border-0 pb-0">
+                <i class="fas fa-chart-bar me-2 text-primary"></i>Faculty Workload
+            </div>
+            <div class="card-body">
+                {% for row in workload_data %}
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between small mb-1">
+                        <span>{{ row.name }}</span>
+                        <span class="text-muted">{{ row.assigned_subjects }}/{{ row.max_workload }}</span>
+                    </div>
+                    <div class="progress" style="height:8px;">
+                        {% set pct = (row.assigned_subjects / row.max_workload * 100) | int if row.max_workload > 0 else 0 %}
+                        <div class="progress-bar {% if pct >= 90 %}bg-danger{% elif pct >= 60 %}bg-warning{% else %}bg-success{% endif %}"
+                             style="width:{{ pct }}%"></div>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-muted small text-center mt-3">No data yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-7">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-bold border-0 pb-0">
+                <i class="fas fa-list me-2 text-primary"></i>Recent Allocations
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 small">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Faculty</th><th>Subject</th><th>Class</th><th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for a in recent_allocs %}
+                            <tr>
+                                <td>{{ a.faculty_name }}</td>
+                                <td>{{ a.subject_name }}</td>
+                                <td><span class="badge bg-secondary">{{ a.class_name }}</span></td>
+                                <td>
+                                    <span class="badge {% if a.score >= 12 %}bg-success{% elif a.score >= 7 %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                                        {{ a.score }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="4" class="text-center text-muted">No allocations yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

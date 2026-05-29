@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Subject Allocation{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h3 class="fw-bold mb-0"><i class="fas fa-magic me-2 text-primary"></i>Subject Allocation</h3>
+        <small class="text-muted">AI-weighted scoring algorithm</small>
+    </div>
+    <div class="d-flex gap-2">
+        <form method="POST" action="{{ url_for('admin.run_allocation') }}">
+            <button class="btn btn-primary">
+                <i class="fas fa-play me-1"></i> Run Allocation
+            </button>
+        </form>
+        <form method="POST" action="{{ url_for('admin.clear_allocation') }}"
+              onsubmit="return confirm('Clear ALL allocations and timetable?')">
+            <button class="btn btn-outline-danger">
+                <i class="fas fa-trash me-1"></i> Clear All
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Scoring Info Card -->
+<div class="alert alert-info border-0 shadow-sm mb-4">
+    <h6 class="fw-bold mb-2"><i class="fas fa-info-circle me-2"></i>Scoring Algorithm</h6>
+    <div class="row g-2">
+        <div class="col-auto"><span class="badge bg-success fs-6">Preference 1: +10 pts</span></div>
+        <div class="col-auto"><span class="badge bg-primary fs-6">Preference 2: +7 pts</span></div>
+        <div class="col-auto"><span class="badge bg-warning text-dark fs-6">Preference 3: +5 pts</span></div>
+        <div class="col-auto"><span class="badge bg-info text-dark fs-6">Experience: +min(exp,5) pts</span></div>
+        <div class="col-auto"><span class="badge bg-danger fs-6">Each existing subject: -2 pts</span></div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Faculty Preferences -->
+    <div class="col-md-5">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-bold border-0">
+                <i class="fas fa-heart me-2 text-danger"></i>Faculty Preferences
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light">
+                            <tr><th>Faculty</th><th>Subject</th><th>Rank</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for p in preferences %}
+                            <tr>
+                                <td>{{ p.faculty_name }}</td>
+                                <td>{{ p.subject_name }}</td>
+                                <td>
+                                    <span class="badge {% if p.preference_rank==1 %}bg-success{% elif p.preference_rank==2 %}bg-primary{% else %}bg-warning text-dark{% endif %}">
+                                        #{{ p.preference_rank }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="3" class="text-center text-muted py-3">No preferences set yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Allocation Results -->
+    <div class="col-md-7">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-bold border-0">
+                <i class="fas fa-check-circle me-2 text-success"></i>Allocation Results
+                <span class="badge bg-secondary ms-2">{{ allocations|length }}</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="allocTable">
+                        <thead class="table-dark">
+                            <tr><th>Class</th><th>Subject</th><th>Assigned Faculty</th><th>Score</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for a in allocations %}
+                            <tr>
+                                <td><span class="badge bg-info text-dark">{{ a.class_name }}</span></td>
+                                <td>
+                                    <strong>{{ a.subject_name }}</strong><br>
+                                    <small class="text-muted">{{ a.subject_code }}</small>
+                                </td>
+                                <td>{{ a.faculty_name }}</td>
+                                <td>
+                                    <span class="badge {% if a.score >= 12 %}bg-success{% elif a.score >= 7 %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                                        {{ a.score }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="4" class="text-center text-muted py-4">
+                                No allocations yet. Click "Run Allocation" to start.
+                            </td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>$(document).ready(function(){ $('#allocTable').DataTable({order:[[0,'asc']]}); });</script>
+{% endblock %}

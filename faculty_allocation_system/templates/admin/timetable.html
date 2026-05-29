@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}Timetable{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h3 class="fw-bold mb-0"><i class="fas fa-calendar-alt me-2 text-primary"></i>Timetable</h3>
+        <small class="text-muted">OR-Tools generated schedule — {{ timetable_rows|length }} periods</small>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <form method="POST" action="{{ url_for('admin.generate_timetable') }}">
+            <button class="btn btn-success">
+                <i class="fas fa-magic me-1"></i> Generate Timetable
+            </button>
+        </form>
+        <form method="POST" action="{{ url_for('admin.clear_timetable') }}"
+              onsubmit="return confirm('Clear timetable?')">
+            <button class="btn btn-outline-secondary">
+                <i class="fas fa-eraser me-1"></i> Clear
+            </button>
+        </form>
+        <a href="{{ url_for('admin.export_timetable_pdf') }}"   class="btn btn-danger">
+            <i class="fas fa-file-pdf me-1"></i> Export PDF
+        </a>
+        <a href="{{ url_for('admin.export_timetable_excel') }}" class="btn btn-success">
+            <i class="fas fa-file-excel me-1"></i> Export Excel
+        </a>
+    </div>
+</div>
+
+<!-- Search -->
+<div class="mb-3">
+    <input type="text" id="ttSearch" class="form-control" placeholder="Search timetable (faculty name, subject, class)...">
+</div>
+
+{% if not timetable_rows %}
+<div class="alert alert-warning text-center py-5">
+    <i class="fas fa-calendar-times fa-3x mb-3 d-block text-warning"></i>
+    <h5>No timetable generated yet.</h5>
+    <p class="text-muted">First run <a href="{{ url_for('admin.allocation') }}">Subject Allocation</a>, then click "Generate Timetable".</p>
+</div>
+{% else %}
+
+<!-- Class-wise Timetable Tabs -->
+<ul class="nav nav-tabs mb-3" id="classTabs" role="tablist">
+    {% for cls in classes %}
+    <li class="nav-item">
+        <button class="nav-link {% if loop.first %}active{% endif %}"
+                data-bs-toggle="tab" data-bs-target="#cls_{{ cls.id }}">
+            <i class="fas fa-users me-1"></i>{{ cls.name }}
+        </button>
+    </li>
+    {% endfor %}
+    <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#allRows">
+            <i class="fas fa-list me-1"></i>All Rows
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content">
+    {% for cls in classes %}
+    <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="cls_{{ cls.id }}">
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-primary text-white">
+                <strong>{{ cls.name }}</strong> — {{ cls.department }} Sem {{ cls.semester }} Section {{ cls.section }}
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-bordered mb-0 timetable-grid">
+                        <thead class="table-dark">
+                            <tr>
+                                <th style="width:120px">Time / Day</th>
+                                {% for day in days %}<th>{{ day }}</th>{% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for slot in slots %}
+                            <tr>
+                                <td class="fw-semibold text-center bg-light small">{{ slot }}</td>
+                                {% for day in days %}
+                                    {% set cell = tt_grid.get(cls.name, {}).get(day, {}).get(slot) %}
+                                    <td class="{% if cell %}tt-filled{% else %}tt-empty{% endif %} text-center">
+                                        {% if cell %}
+                                            <strong class="text-primary small">{{ cell.subject_code }}</strong><br>
+                                            <small>{{ cell.faculty_name.split()[0] }} {{ cell.faculty_name.split()[-1] }}</small><br>
+                                            <span class="badge bg-secondary" style="font-size:0.65rem">{{ cell.room }}</span>
+                                        {% else %}
+                                            <span class="text-muted small">—</span>
+                                        {% endif %}
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Faculty-wise export for this class -->
+        {% for fac in faculty %}
+        <a href="{{ url_for('admin.export_faculty_timetable_excel', fac_id=fac.id) }}"
+           class="btn btn-sm btn-outline-success me-1 mb-2">
+            <i class="fas fa-file-excel me-1"></i>{{ fac.name }} Excel
+        </a>
+        {% endfor %}
+    </div>
+    {% endfor %}
+
+    <!-- All rows tab -->
+    <div class="tab-pane fade" id="allRows">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="allRowsTable">
+                        <thead class="table-dark">
+                            <tr><th>Class</th><th>Day</th><th>Slot</th><th>Subject</th><th>Faculty</th><th>Room</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for row in timetable_rows %}
+                            <tr>
+                                <td><span class="badge bg-info text-dark">{{ row.class_name }}</span></td>
+                                <td>{{ row.day }}</td>
+                                <td>{{ row.time_slot }}</td>
+                                <td><strong>{{ row.subject_code }}</strong> — {{ row.subject_name }}</td>
+                                <td>{{ row.faculty_name }}</td>
+                                <td>{{ row.room }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+$(document).ready(function(){
+    var dt = $('#allRowsTable').DataTable({order:[[0,'asc'],[1,'asc']]});
+    $('#ttSearch').on('keyup', function(){
+        dt.search(this.value).draw();
+        // Also filter the grid tabs
+        var val = $(this).val().toLowerCase();
+        $('td.tt-filled').each(function(){
+            $(this).css('opacity', (!val || $(this).text().toLowerCase().includes(val)) ? 1 : 0.15);
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Add Faculty{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h3 class="fw-bold mb-0"><i class="fas fa-user-plus me-2 text-primary"></i>Add New Faculty</h3>
+    </div>
+    <a href="{{ url_for('admin.faculty_list') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-arrow-left me-1"></i> Back
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('admin.add_faculty') }}">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Full Name *</label>
+                            <input type="text" name="name" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email *</label>
+                            <input type="email" name="email" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Username *</label>
+                            <input type="text" name="username" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Password *</label>
+                            <input type="password" name="password" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Department *</label>
+                            <input type="text" name="department" class="form-control" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Experience (yrs)</label>
+                            <input type="number" name="experience" class="form-control" value="0" min="0">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Max Workload</label>
+                            <input type="number" name="max_workload" class="form-control" value="4" min="1">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Available Days</label>
+                            <div class="d-flex gap-3">
+                                {% for day in ['Mon','Tue','Wed','Thu','Fri'] %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox"
+                                           name="available_days" value="{{ day }}" id="d_{{ day }}" checked>
+                                    <label class="form-check-label" for="d_{{ day }}">{{ day }}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="fas fa-save me-2"></i>Save Faculty
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

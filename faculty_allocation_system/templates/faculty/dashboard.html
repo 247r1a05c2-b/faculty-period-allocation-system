@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% block title %}Faculty Dashboard{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h3 class="fw-bold mb-0">
+            <i class="fas fa-tachometer-alt me-2 text-primary"></i>Welcome, {{ faculty.name }}
+        </h3>
+        <small class="text-muted">{{ faculty.department }} &bull; {{ faculty.experience_years }} years experience</small>
+    </div>
+    <a href="{{ url_for('faculty_bp.preferences') }}" class="btn btn-primary">
+        <i class="fas fa-heart me-1"></i> Set Preferences
+    </a>
+</div>
+
+<!-- Stats Row -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="stat-icon bg-primary-soft mb-2"><i class="fas fa-heart text-primary"></i></div>
+                <h4 class="fw-bold mb-0">{{ preferences|length }}/3</h4>
+                <small class="text-muted">Preferences Set</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="stat-icon bg-success-soft mb-2"><i class="fas fa-book text-success"></i></div>
+                <h4 class="fw-bold mb-0">{{ allocations|length }}</h4>
+                <small class="text-muted">Assigned Subjects</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="stat-icon bg-warning-soft mb-2"><i class="fas fa-clock text-warning"></i></div>
+                <h4 class="fw-bold mb-0">{{ timetable_rows|length }}</h4>
+                <small class="text-muted">Weekly Periods</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="stat-icon bg-info-soft mb-2"><i class="fas fa-tasks text-info"></i></div>
+                <h4 class="fw-bold mb-0">{{ faculty.max_workload }}</h4>
+                <small class="text-muted">Max Workload</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Row -->
+<div class="row g-3">
+    <!-- Preferences -->
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white fw-bold border-0">
+                <i class="fas fa-heart me-2 text-danger"></i>My Preferences
+            </div>
+            <div class="card-body">
+                {% if preferences %}
+                    {% for p in preferences %}
+                    <div class="d-flex align-items-center mb-3 p-2 rounded-3
+                                {% if p.preference_rank==1 %}bg-success bg-opacity-10{% elif p.preference_rank==2 %}bg-primary bg-opacity-10{% else %}bg-warning bg-opacity-10{% endif %}">
+                        <span class="badge me-3 {% if p.preference_rank==1 %}bg-success{% elif p.preference_rank==2 %}bg-primary{% else %}bg-warning text-dark{% endif %} fs-6">
+                            #{{ p.preference_rank }}
+                        </span>
+                        <div>
+                            <div class="fw-semibold">{{ p.subject_name }}</div>
+                            <small class="text-muted">{{ p.code }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted py-3">
+                        <i class="fas fa-heart fa-2x mb-2 d-block text-danger opacity-25"></i>
+                        No preferences set yet.
+                        <br>
+                        <a href="{{ url_for('faculty_bp.preferences') }}" class="btn btn-sm btn-primary mt-2">
+                            Set Now
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Allocated Subjects -->
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white fw-bold border-0">
+                <i class="fas fa-book me-2 text-success"></i>Assigned Subjects
+            </div>
+            <div class="card-body">
+                {% if allocations %}
+                    {% for a in allocations %}
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded-3 bg-light">
+                        <div>
+                            <div class="fw-semibold small">{{ a.subject_name }}</div>
+                            <small class="text-muted">{{ a.code }} &bull; Class: {{ a.class_name }}</small>
+                        </div>
+                        <span class="badge {% if a.score >= 12 %}bg-success{% elif a.score >= 7 %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                            {{ a.score }}pts
+                        </span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted py-3">
+                        <i class="fas fa-book fa-2x mb-2 d-block opacity-25"></i>
+                        No subjects assigned yet.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Timetable -->
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white fw-bold border-0">
+                <i class="fas fa-calendar-alt me-2 text-primary"></i>Today's Schedule
+                <a href="{{ url_for('faculty_bp.timetable') }}" class="btn btn-sm btn-outline-primary float-end">
+                    Full View
+                </a>
+            </div>
+            <div class="card-body p-0">
+                {% if timetable_rows %}
+                    {% for row in timetable_rows[:6] %}
+                    <div class="d-flex gap-2 align-items-center px-3 py-2 border-bottom">
+                        <span class="badge bg-info text-dark" style="min-width:60px;font-size:0.65rem">{{ row.day[:3] }}</span>
+                        <div class="flex-grow-1">
+                            <div class="small fw-semibold">{{ row.subject_name }}</div>
+                            <small class="text-muted">{{ row.time_slot }} &bull; {{ row.class_name }}</small>
+                        </div>
+                        <span class="badge bg-secondary" style="font-size:0.65rem">{{ row.room }}</span>
+                    </div>
+                    {% endfor %}
+                    {% if timetable_rows|length > 6 %}
+                    <div class="text-center py-2 small text-muted">
+                        +{{ timetable_rows|length - 6 }} more periods
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-calendar-times fa-2x mb-2 d-block opacity-25"></i>
+                        Timetable not generated yet.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Update Profile -->
+<div class="card border-0 shadow-sm mt-3">
+    <div class="card-header bg-white fw-bold border-0">
+        <i class="fas fa-user-edit me-2 text-primary"></i>Update My Profile
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('faculty_bp.update_profile') }}" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Experience (years)</label>
+                <input type="number" name="experience" class="form-control"
+                       value="{{ faculty.experience_years }}" min="0" max="40">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Max Workload (subjects)</label>
+                <input type="number" name="max_workload" class="form-control"
+                       value="{{ faculty.max_workload }}" min="1" max="8">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Available Days</label>
+                <div class="d-flex gap-3">
+                    {% for day in ['Mon','Tue','Wed','Thu','Fri'] %}
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="available_days"
+                               value="{{ day }}" id="avail_{{ day }}"
+                               {% if faculty.available_days and day in faculty.available_days %}checked{% endif %}>
+                        <label class="form-check-label small" for="avail_{{ day }}">{{ day }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-save me-1"></i> Update
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
