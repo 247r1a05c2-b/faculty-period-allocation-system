@@ -16,28 +16,24 @@ admin = Blueprint('admin', __name__, url_prefix='/admin')
 def dashboard():
     cur = mysql.connection.cursor()
 
-    cur.execute("SELECT COUNT(*) AS cnt FROM faculty")
-    faculty_count = cur.fetchone()['cnt']
-
-    cur.execute("SELECT COUNT(*) AS cnt FROM subjects")
-    subject_count = cur.fetchone()['cnt']
-
-    cur.execute("SELECT COUNT(*) AS cnt FROM classes")
-    class_count = cur.fetchone()['cnt']
-
-    cur.execute("SELECT COUNT(*) AS cnt FROM allocations")
-    alloc_count = cur.fetchone()['cnt']
-
-    cur.execute("SELECT COUNT(*) AS cnt FROM timetable")
-    tt_count = cur.fetchone()['cnt']
+    # One database round-trip for all dashboard counters.
+    cur.execute("""
+        SELECT
+            (SELECT COUNT(*) FROM faculty) AS faculty_count,
+            (SELECT COUNT(*) FROM subjects) AS subject_count,
+            (SELECT COUNT(*) FROM classes) AS class_count,
+            (SELECT COUNT(*) FROM allocations) AS alloc_count,
+            (SELECT COUNT(*) FROM timetable) AS tt_count
+    """)
+    counts = cur.fetchone()
 
     cur.execute("""
         SELECT f.name AS faculty_name, s.name AS subject_name,
                c.name AS class_name, a.score
         FROM allocations a
-        JOIN faculty f   ON a.faculty_id = f.id
-        JOIN subjects s  ON a.subject_id = s.id
-        JOIN classes  c  ON a.class_id   = c.id
+        JOIN faculty f ON a.faculty_id = f.id
+        JOIN subjects s ON a.subject_id = s.id
+        JOIN classes c ON a.class_id = c.id
         ORDER BY a.allocated_at DESC LIMIT 10
     """)
     recent_allocs = cur.fetchall()
@@ -47,18 +43,21 @@ def dashboard():
         FROM faculty f
         LEFT JOIN allocations a ON f.id = a.faculty_id
         GROUP BY f.id, f.name, f.max_workload
+        ORDER BY f.name
     """)
     workload_data = cur.fetchall()
-
     cur.close()
-    return render_template('admin/dashboard.html',
-                           faculty_count=faculty_count,
-                           subject_count=subject_count,
-                           class_count=class_count,
-                           alloc_count=alloc_count,
-                           tt_count=tt_count,
-                           recent_allocs=recent_allocs,
-                           workload_data=workload_data)
+
+    return render_template(
+        'admin/dashboard.html',
+        faculty_count=counts['faculty_count'],
+        subject_count=counts['subject_count'],
+        class_count=counts['class_count'],
+        alloc_count=counts['alloc_count'],
+        tt_count=counts['tt_count'],
+        recent_allocs=recent_allocs,
+        workload_data=workload_data
+    )
 
 # ============================================================
 # MANAGE FACULTY
@@ -137,10 +136,10 @@ def subjects():
 @admin.route('/subjects/add', methods=['POST'])
 @admin_required
 def add_subject():
-    name     = request.form['name'].strip()
-    code     = request.form['code'].strip().upper()
-    dept     = request.form['department'].strip()
-    credits  = int(request.form.get('credits', 3))
+    name = request.form['name'].strip()
+    code = request.form['code'].strip().upper()
+    dept = request.form['department'].strip()
+    credits = int(request.form.get('credits', 3))
     wk_hours = int(request.form.get('weekly_hours', 3))
     try:
         cur = mysql.connection.cursor()
@@ -180,10 +179,10 @@ def classes():
 @admin.route('/classes/add', methods=['POST'])
 @admin_required
 def add_class():
-    name     = request.form['name'].strip()
-    dept     = request.form['department'].strip()
+    name = request.form['name'].strip()
+    dept = request.form['department'].strip()
     semester = int(request.form.get('semester', 1))
-    section  = request.form.get('section', 'A').strip()
+    section = request.form.get('section', 'A').strip()
     try:
         cur = mysql.connection.cursor()
         cur.execute(
@@ -218,9 +217,9 @@ def allocation():
         SELECT a.id, f.name AS faculty_name, s.name AS subject_name,
                s.code AS subject_code, c.name AS class_name, a.score
         FROM allocations a
-        JOIN faculty f  ON a.faculty_id = f.id
+        JOIN faculty f ON a.faculty_id = f.id
         JOIN subjects s ON a.subject_id = s.id
-        JOIN classes  c ON a.class_id   = c.id
+        JOIN classes c ON a.class_id = c.id
         ORDER BY c.name, s.code
     """)
     allocations = cur.fetchall()
@@ -228,7 +227,7 @@ def allocation():
     cur.execute("""
         SELECT f.name AS faculty_name, s.name AS subject_name, p.preference_rank
         FROM preferences p
-        JOIN faculty f  ON p.faculty_id = f.id
+        JOIN faculty f ON p.faculty_id = f.id
         JOIN subjects s ON p.subject_id = s.id
         ORDER BY f.name, p.preference_rank
     """)
@@ -266,7 +265,6 @@ def clear_allocation():
 @admin_required
 def timetable():
     cur = mysql.connection.cursor()
-
     cur.execute("SELECT * FROM classes ORDER BY name")
     classes = cur.fetchall()
 
@@ -277,20 +275,17 @@ def timetable():
         SELECT t.*, f.name AS faculty_name, s.name AS subject_name,
                s.code AS subject_code, c.name AS class_name
         FROM timetable t
-        JOIN faculty f  ON t.faculty_id = f.id
+        JOIN faculty f ON t.faculty_id = f.id
         JOIN subjects s ON t.subject_id = s.id
-        JOIN classes  c ON t.class_id   = c.id
+        JOIN classes c ON t.class_id = c.id
         ORDER BY c.name, t.day, t.time_slot
     """)
     timetable_rows = cur.fetchall()
     cur.close()
 
-    days  = ['Monday','Tuesday','Wednesday','Thursday','Friday']
+    days = ['Monday','Tuesday','Wednesday','Thursday','Friday']
     slots = ['9:00-10:00','10:00-11:00','11:00-12:00','12:00-1:00','2:00-3:00','3:00-4:00']
-
-    tt_grid = {}
-    for cls in classes:
-        tt_grid[cls['name']] = {d: {s: None for s in slots} for d in days}
+    tt_grid = {cls['name']: {d: {s: None for s in slots} for d in days} for cls in classes}
 
     for row in timetable_rows:
         cname = row['class_name']
