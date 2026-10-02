@@ -3,7 +3,10 @@ import re
 from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
 from flask import g
 import psycopg2
+from psycopg2 import pool
 from psycopg2.extras import RealDictCursor
+
+_POOL = None
 
 
 def _database_url():
@@ -14,8 +17,19 @@ def _database_url():
     parts = urlparse(url)
     query = dict(parse_qsl(parts.query, keep_blank_values=True))
     query.setdefault('sslmode', 'require')
-    query.setdefault('connect_timeout', '10')
+    query.setdefault('connect_timeout', '5')
+    query.setdefault('keepalives', '1')
+    query.setdefault('keepalives_idle', '30')
+    query.setdefault('keepalives_interval', '10')
+    query.setdefault('keepalives_count', '3')
     return urlunparse(parts._replace(query=urlencode(query)))
+
+
+def _get_pool():
+    global _POOL
+    if _POOL is None:
+        _POOL = pool.ThreadedConnectionPool(1, 4, _database_url())
+    return _POOL
 
 
 class CompatCursor:
@@ -59,13 +73,21 @@ class PostgresDB:
 
     def _connect(self):
         if 'db_conn' not in g:
-            g.db_conn = psycopg2.connect(_database_url())
+            conn = _get_pool().getconn()
+            conn.autocommit = False
+            g.db_conn = conn
         return g.db_conn
 
     def _close(self, exception=None):
         conn = g.pop('db_conn', None)
         if conn is not None:
-            conn.close()
+            try:
+                if exception is not None:
+                    conn.rollback()
+                else:
+                    conn.rollback()
+            finally:
+                _get_pool().putconn(conn)
 
     @property
     def connection(self):
